@@ -1,5 +1,10 @@
 import logging
 import constants
+from Scrapy import SuperSpider
+import scrapy
+from scrapy.crawler import CrawlerProcess
+
+
 
 from telegram import Update
 
@@ -43,7 +48,9 @@ def answer(update, context):
         text = text.replace('*', '').strip()
         # for l in scrapp.scrapper(text.replace(' ', '-')):
         #     context.bot.sendMessage(chat_id=user_id, text=l)
-        context.bot.sendMessage(chat_id=user_id, text=constants.QUESTION)
+        a= getProductSuggestions(text)
+
+        context.bot.sendMessage(chat_id=user_id, text=a)
     if text.lower() == 'no':
         context.bot.sendMessage(chat_id=user_id, text=constants.BYE_MSJ)
 
@@ -68,6 +75,7 @@ def getMessageText(update: Update, context: CallbackContext):
     else:
         if text != 'si':
             response = getProductSuggestions(text)
+            logger.info(f"RESPUESTA {response}")
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text="Estos son los productos relacionados a su búsqueda {}".format(response))
             update.message.reply_text("¿Desea realizar una nueva búsqueda?")
@@ -86,13 +94,25 @@ def validate(text):
 
 
 def getProductSuggestions(productoOrCategoryTxt):
-    return 'Aca van los resultados o el link relacionado a {}'.format(productoOrCategoryTxt)
+    logger.info(f"Inicio la araña")
+    try:
+        spider = SuperSpider(productoOrCategoryTxt)
+        process = CrawlerProcess()
+        process.crawl(spider)
+        process.start()
+        logger.info(f"Final la araña")
+        return('www.mercadolibre.com/')
+    except Exception as e:
+        logger.info(f"error al ejecutar la araña {e.message}")
+        return('www.amazon.com')
+
 
 
 def main() -> None:
     """Run bot."""
     # create the Updater and pass it your bot's token.
-    updater = Updater("5074260439:AAGufztidGmGn7dF2YrltpEAfg_I8GOKY1M")
+    #updater = Updater("5074260439:AAGufztidGmGn7dF2YrltpEAfg_I8GOKY1M")
+    updater= Updater("5082826605:AAFLrkhCFjDMjTc1imQ48TuEbtU8gssi0XY")
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(MessageHandler(Filters.text, answer))
