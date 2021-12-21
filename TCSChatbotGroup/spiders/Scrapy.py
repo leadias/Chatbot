@@ -27,6 +27,8 @@ class SuperSpider(scrapy.Spider):
         try:
             #logger.info(f"Entro en la ejecucion de la araña")
 
+            
+
             request = scrapy.FormRequest(url=self.start_urls[0],
                                      method='GET',cookies=self.define_cookies(),                                     
                                      callback=self.to_scrape)
