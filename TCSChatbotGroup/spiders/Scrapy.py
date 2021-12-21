@@ -1,17 +1,5 @@
 import re
-import logging
 import scrapy
-
-lista = []
-count_page = 0
-amount_page = 0
-
-""" logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
- """
 
 class SuperSpider(scrapy.Spider):
     name = "items"
@@ -22,17 +10,11 @@ class SuperSpider(scrapy.Spider):
         self.params = params
         self.start_urls = ['https://listado.mercadolibre.com.co/{}'.format(self.params)]
 
-
     def parse(self, response):                                                
-        try:
-            #logger.info(f"Entro en la ejecucion de la araña")
-
-            
-
+        try:            
             request = scrapy.FormRequest(url=self.start_urls[0],
                                      method='GET',cookies=self.define_cookies(),                                     
                                      callback=self.to_scrape)
-
             yield request
         except:
             yield [{'links':'no se encontro resultados'}]
@@ -53,29 +35,20 @@ class SuperSpider(scrapy.Spider):
                     'LAST_SEARCH':self.params
                     }]
 
-
     def to_scrape(self,response):
         try:
             divs= response.css('.ui-search-result__content-wrapper')
             if divs[0].xpath('.//div[@class="ui-search-item__group ui-search-item__group--title"]/a/@href').get() is None:            
-                self.get_links(response.css('.ui-search-result__image'),1)                                
+                self.get_links(response.css('.ui-search-result__image'),'.//a/@href')                                
             else:
-                count=0
-                self.get_links(divs,0)                
+                self.get_links(divs,'.//div[@class="ui-search-item__group ui-search-item__group--title"]/a/@href')                
             yield self.links
         except:
             yield [{'links':'no se encontratos resultado'}]
     
-
-    def get_links(self,selector,aux):
+    def get_links(self,selector,path):
         count =0
-        if(aux==1):
-            while count < 5:
-                a=selector[count].xpath('.//a/@href').get()
-                self.links['links'].append(a)
-                count+=1
-        else:
-            while count < 5:
-                a= selector[count].xpath('.//div[@class="ui-search-item__group ui-search-item__group--title"]/a/@href').get()
-                self.links['links'].append(a)
-                count+=1
+        while count < 5:
+            link=selector[count].xpath(path).get()
+            self.links['links'].append(link)
+            count+=1
