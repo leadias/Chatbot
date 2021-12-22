@@ -13,10 +13,12 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 # Obtener token
-#TOKEN = "5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE"
-TOKEN="5035946334:AAHzHpE-xydiEwPkNGwtDD8OJPMx36wDGzA"
-#Especifica el 
-mode= os.getenv("MODE")
+# TOKEN = "5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE"
+# TOKEN = "5035946334:AAHzHpE-xydiEwPkNGwtDD8OJPMx36wDGzA"
+TOKEN = os.getenv("TOKEN")
+
+# Especifica el modo
+mode = os.getenv("MODE")
 
 if mode == "dev":
     def run(updater):
@@ -25,13 +27,18 @@ if mode == "dev":
         updater.idle()
 elif mode == "prod":
     def run(updater):
-        PORT =int(os.environ.get("PORT","8483"))
+        PORT = int(os.environ.get("PORT", "8443"))
         HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
-        updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN)
-        updater.set_webhook(f"https://{HEROKU_APP_NAME}.herokuapp.com/{TOKEN}")
+        # updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
+        updater.start_webhook(listen="0.0.0.0",
+                              port=PORT,
+                              url_path=TOKEN,
+                              webhook_url=f"https://{HEROKU_APP_NAME}.herokuapp.com/{TOKEN}")
+        updater.set_webhook()
 else:
     logging.info("NO se especifico Ambiente")
     sys.exit()
+
 
 def validate_initial_msjs(msj):
     boolean = False
@@ -81,4 +88,3 @@ dp = updater.dispatcher
 dp.add_handler(MessageHandler(Filters.text, answer))
 
 run(updater)
-
