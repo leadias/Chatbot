@@ -34,10 +34,14 @@ def answer(update, context):
             text=constants.WELLCOME_MSJ
         )
     if '*' in text:
-        context.bot.sendMessage(chat_id=user_id, text=constants.RESPONSE_MSJ)
         text = text.replace('*', '').strip()
-        for l in scrapp.scrapper(text.replace(' ', '-')):
-            context.bot.sendMessage(chat_id=user_id, text=l)
+        links = scrapp.scrapper(text.replace(' ', '-'))
+        if links:
+            context.bot.sendMessage(chat_id=user_id, text=constants.RESPONSE_MSJ)
+            for l in links:
+                context.bot.sendMessage(chat_id=user_id, text=l)
+        else:
+            context.bot.sendMessage(chat_id=user_id, text=constants.NO_RESULTS)
         context.bot.sendMessage(chat_id=user_id, text=constants.QUESTION)
     if text.lower() == 'no':
         context.bot.sendMessage(chat_id=user_id, text=constants.BYE_MSJ)
