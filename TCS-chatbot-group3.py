@@ -1,26 +1,17 @@
 import logging
-
-from scrapy.utils.project import get_project_settings
-
+import Scrapy_BS
 import constants
-from scrapy import signals
-from pydispatch import dispatcher
-from TCSChatbotGroup.spiders.Scrapy import SuperSpider
-from scrapy.crawler import CrawlerProcess
-from telegram import Update
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    ConversationHandler,
-    MessageHandler,
-    Filters,
-    CallbackContext,
-)
+import telegram
+from telegram.ext import Updater, MessageHandler, Filters
 
+# Configuracion de logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+
+# Obtener token
+TOKEN = "5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE"
 
 
 def validate_initial_msjs(msj):
@@ -33,7 +24,7 @@ def validate_initial_msjs(msj):
 
 
 def answer(update, context):
-    # scrapp = scrapping.ScrapMercadoLibre()
+    scrapp = Scrapy_BS.ScrapMercadoLibre()
     user_id = update.effective_user['id']
     logger.info(f"El usuario {user_id} ha enviado un mensaje de texto.")
     text = update.message.text
@@ -45,42 +36,27 @@ def answer(update, context):
     if '*' in text:
         context.bot.sendMessage(chat_id=user_id, text=constants.RESPONSE_MSJ)
         text = text.replace('*', '').strip()
-        # for l in spider_results(text.replace(' ', '-'))['links']:
-        #     context.bot.sendMessage(chat_id=user_id, text=l)
+        for l in scrapp.scrapper(text.replace(' ', '-')):
+            context.bot.sendMessage(chat_id=user_id, text=l)
         context.bot.sendMessage(chat_id=user_id, text=constants.QUESTION)
     if text.lower() == 'no':
         context.bot.sendMessage(chat_id=user_id, text=constants.BYE_MSJ)
 
 
-def spider_results(parametro):
-    results = []
+if __name__ == "__main__":
+    # Obtener informacion de bot
+    bot = telegram.Bot(token=TOKEN)
+    # print(bot.getMe())
 
-    def crawler_results(signal, sender, item, response, spider):
-        results.append(item)
+# Enlazar updater con bot
+updater = Updater(bot.token, use_context=True)
 
-    dispatcher.connect(crawler_results, signal=signals.item_passed)
-    process = CrawlerProcess(get_project_settings())
-    process.crawl(SuperSpider, parameter=parametro)
-    process.start()  # the script will block here until the crawling is finished
-    return results
+# Creacion de despachador
+dp = updater.dispatcher
 
+# Creacion de manejadores
+dp.add_handler(MessageHandler(Filters.text, answer))
 
-def main() -> None:
-    """Run bot."""
-    # create the Updater and pass it your bot's token.
-    # updater = Updater("5074260439:AAGufztidGmGn7dF2YrltpEAfg_I8GOKY1M")
-    # updater= Updater("5082826605:AAFLrkhCFjDMjTc1imQ48TuEbtU8gssi0XY")
-    updater = Updater("5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE")
-    dispatcher_bot = updater.dispatcher
-    dispatcher_bot.add_handler(MessageHandler(Filters.text, answer))
-
-    # Start the Bot
-    updater.start_polling()
-
-    # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT
-    updater.idle()
-
-
-if __name__ == '__main__':
-    main()
+updater.start_polling()
+print("BOT CARGADO")
+updater.idle()
