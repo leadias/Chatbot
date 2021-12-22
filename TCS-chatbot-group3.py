@@ -44,13 +44,15 @@ def validate_initial_msjs(msj):
 
 def answer(update, context):
     scrapp = Scrapy_BS.ScrapMercadoLibre()
-    user_id = update.effective_user['id']
+    user = update.message.from_user
+    user_id = user['id']
+    
     logger.info(f"El usuario {user_id} ha enviado un mensaje de texto.")
     text = update.message.text
     if validate_initial_msjs(text):
         context.bot.sendMessage(
             chat_id=user_id,
-            text=constants.WELLCOME_MSJ
+            text=constants.WELLCOME_MSJ.format(user['first_name'])
         )
     if '*' in text:
         context.bot.sendMessage(chat_id=user_id, text=constants.RESPONSE_MSJ)
