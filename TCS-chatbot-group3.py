@@ -2,6 +2,8 @@ import logging
 import Scrapy_BS
 import constants
 import telegram
+import os
+import sys
 from telegram.ext import Updater, MessageHandler, Filters
 
 # Configuracion de logging
@@ -11,8 +13,25 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 # Obtener token
-TOKEN = "5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE"
+#TOKEN = "5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE"
+TOKEN="5035946334:AAHzHpE-xydiEwPkNGwtDD8OJPMx36wDGzA"
+#Especifica el 
+mode= os.getenv("MODE")
 
+if mode == "dev":
+    def run(updater):
+        updater.start_polling()
+        print("BOT CARGADO")
+        updater.idle()
+elif mode == "prod":
+    def run(updater):
+        PORT =int(os.environ.get("PORT","8483"))
+        HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
+        updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN)
+        updater.set_webhook(f"https://{HEROKU_APP_NAME}.herokuapp.com/{TOKEN}")
+else:
+    logging.info("NO se especifico Ambiente")
+    sys.exit()
 
 def validate_initial_msjs(msj):
     boolean = False
@@ -61,6 +80,5 @@ dp = updater.dispatcher
 # Creacion de manejadores
 dp.add_handler(MessageHandler(Filters.text, answer))
 
-updater.start_polling()
-print("BOT CARGADO")
-updater.idle()
+run(updater)
+
