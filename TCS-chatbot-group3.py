@@ -1,10 +1,10 @@
 import logging
-import Scrapy_BS
-import constants
+import Scrapy_BS 
 import telegram
 import os
 import sys
 from telegram.ext import Updater, MessageHandler, Filters
+from constants import Constants 
 
 # Configuracion de logging
 logging.basicConfig(
@@ -13,8 +13,6 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 # Obtener token
-# TOKEN = "5079732120:AAHDOpA50FOKLDETwg7YMVaJViiaZbEPVRE"
-# TOKEN = "5035946334:AAHzHpE-xydiEwPkNGwtDD8OJPMx36wDGzA"
 TOKEN = os.getenv("TOKEN")
 
 # Especifica el modo
@@ -23,14 +21,14 @@ mode = os.getenv("MODE")
 if mode == "dev":
     def run(updater):
         updater.start_polling()
-        print("BOT CARGADO")
         updater.idle()
+        
 elif mode == "prod":
     def run(updater):
-        PORT = int(os.environ.get("PORT", "8443"))
-        HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
-        # updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
-        updater.start_webhook(listen="0.0.0.0",
+        PORT = int(os.environ.get("PORT", Constants.PORT))
+        HEROKU_APP_NAME = os.environ.get(Constants.HEROKU_APP_NAME)
+        
+        updater.start_webhook(listen=Constants.HOST,
                               port=PORT,
                               url_path=TOKEN,
                               webhook_url=f"https://{HEROKU_APP_NAME}.herokuapp.com/{TOKEN}")
@@ -39,16 +37,16 @@ else:
     logging.info("NO se especifico Ambiente")
     sys.exit()
 
-
+#Funciona que valida si el mensaje recibido esta en la constante de saludo
 def validate_initial_msjs(msj):
     boolean = False
-    for m in constants.INITIAL_MSJS:
+    for m in Constants.INITIAL_MSJS:
         boolean = m in msj.lower()
         if boolean:
             return True
     return boolean
 
-
+#Funcion que obtiene el mensaje y da respuesta del bot
 def answer(update, context):
     scrapp = Scrapy_BS.ScrapMercadoLibre()
     user = update.message.from_user
@@ -59,26 +57,25 @@ def answer(update, context):
     if validate_initial_msjs(text):
         context.bot.sendMessage(
             chat_id=user_id,
-            text=constants.WELLCOME_MSJ.format(user['first_name'])
+            text=Constants.WELLCOME_MSJ.format(user['first_name'])
         )
     if '*' in text:
         text = text.replace('*', '').strip()
         links = scrapp.scrapper(text.replace(' ', '-'))
         if links:
-            context.bot.sendMessage(chat_id=user_id, text=constants.RESPONSE_MSJ)
+            context.bot.sendMessage(chat_id=user_id, text=Constants.RESPONSE_MSJ)
             for l in links:
                 context.bot.sendMessage(chat_id=user_id, text=l)
         else:
-            context.bot.sendMessage(chat_id=user_id, text=constants.NO_RESULTS)
-        context.bot.sendMessage(chat_id=user_id, text=constants.QUESTION)
+            context.bot.sendMessage(chat_id=user_id, text=Constants.NO_RESULTS)
+        context.bot.sendMessage(chat_id=user_id, text=Constants.QUESTION)
     if text.lower() == 'no':
-        context.bot.sendMessage(chat_id=user_id, text=constants.BYE_MSJ)
+        context.bot.sendMessage(chat_id=user_id, text=Constants.BYE_MSJ)
 
 
 if __name__ == "__main__":
     # Obtener informacion de bot
     bot = telegram.Bot(token=TOKEN)
-    # print(bot.getMe())
 
 # Enlazar updater con bot
 updater = Updater(bot.token, use_context=True)
